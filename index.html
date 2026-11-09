@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-57WEzWB4YH5mr1DTuXTG3CviPFpaoK+E/uQTMARoBsE='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Cuentos de Clara</title>
+<style>
+/* Diseño: una columna centrada y tranquila. Arriba el título, los 4 niveles y el interruptor de lectura. Debajo, el cuento y la actividad. Una sola apariencia clara (crema), por accesibilidad. */
+:root {
+  --bg: #FDFBF7;
+  --card: #F5EFEB;
+  --ink: #3E2723;
+  --navy: #297e1a;
+  --line: #D8C8BB;
+  --btn: #EBDFD4;
+  --btn-hover: #E2D3C6;
+  --soft: #D5DAF3;
+  --ok: #DEE9D3;
+  --ok-line: #7D9C68;
+  --hint: #66c7e8;
+  --hint-line: #eeddee;
+  --shadow: rgba(62, 39, 35, .14);
+  --font: Verdana, "Arial Rounded MT Bold", Arial, sans-serif;
+  color-scheme: light;
+}
+html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 18px;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  word-spacing: 0.12em;
+  padding-block: 18px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: inherit; }
+:focus-visible { outline: 4px solid var(--navy); outline-offset: 3px; }
+[hidden] { display: none !important; }
+
+h1 { margin: 0; font-size: 1.7rem; line-height: 1.3; color: var(--navy); }
+.tag { margin: 0; color: var(--ink); font-size: 0.95rem; }
+h2, h3 { margin: 0; color: var(--navy); line-height: 1.4; text-wrap: balance; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.2rem; }
+
+.levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0; margin: 0; list-style: none; }
+@media (max-width: 560px) { .levels { grid-template-columns: repeat(2, 1fr); } }
+.lv {
+  width: 100%; min-height: 64px; padding: 8px 10px; border-radius: 16px; cursor: pointer;
+  background: var(--btn); border: 3px solid var(--line); text-align: left; line-height: 1.35; font-size: 0.9rem;
+}
+.lv b { display: block; font-size: 1rem; }
+.lv[aria-current="true"] { background: var(--navy); border-color: var(--navy); color: var(--bg); }
+.lv:hover:not([aria-current="true"]) { background: var(--btn-hover); }
+
+.modebar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mode {
+  min-height: 56px; padding: 0 20px; border-radius: 28px; cursor: pointer; font-weight: 700;
+  background: var(--soft); border: 3px solid var(--navy); color: var(--navy);
+}
+.mode[aria-pressed="false"] { background: var(--btn); border-color: var(--line); color: var(--ink); }
+.modenote { margin: 0; font-size: 0.85rem; flex: 1; min-width: 200px; }
+
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 20px; box-shadow: 0 4px 14px var(--shadow); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+
+.spk {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 18px; border-radius: 26px; cursor: pointer;
+  background: var(--bg); border: 3px solid var(--navy); color: var(--navy); font-weight: 700; font-size: 0.95rem;
+}
+.spk:hover { background: var(--soft); }
+
+/* Cuento */
+.text { margin: 0; font-size: 1.4rem; line-height: 2.1; letter-spacing: 0.07em; word-spacing: 0.2em; }
+.sent { border-radius: 10px; padding: 2px 2px; transition: background .3s ease; }
+.sent.glow { background: var(--hint); box-shadow: 0 0 0 3px var(--hint); }
+.sent.found { background: var(--ok); box-shadow: 0 0 0 3px var(--ok); }
+.sent.pickable { cursor: pointer; }
+.sent.pickable:hover { background: var(--btn); box-shadow: 0 0 0 3px var(--btn); }
+.w { border-radius: 8px; }
+.w.pick { cursor: pointer; }
+.w.pick:hover { background: var(--btn); }
+.w.found { background: var(--ok); box-shadow: 0 0 0 2px var(--ok); }
+.syl { background: var(--soft); color: var(--navy); font-weight: 700; border-radius: 6px; padding: 0 2px; }
+
+/* Actividad */
+.steps { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.88rem; }
+.dot { width: 14px; height: 14px; border-radius: 50%; background: var(--btn); border: 2px solid var(--line); }
+.dot.done { background: var(--ok-line); border-color: var(--ok-line); }
+.dot.now { background: var(--navy); border-color: var(--navy); }
+.opts { display: grid; gap: 12px; margin-top: 14px; }
+.opt {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; padding: 10px 18px; border-radius: 18px;
+  background: var(--btn); border: 3px solid var(--line); cursor: pointer; text-align: left; font-size: 1.2rem; font-weight: 700;
+}
+.opt:hover:not(:disabled) { background: var(--btn-hover); }
+.opt .ic { font-size: 1.9rem; line-height: 1; }
+.opt.right { background: var(--ok); border-color: var(--ok-line); }
+.opt:disabled { cursor: default; }
+.opt.tried { opacity: .55; border-style: dashed; }
+.sylopts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+.sylopts .opt { justify-content: center; font-size: 2rem; min-height: 80px; padding: 8px; }
+.frame { font-size: 2.6rem; font-weight: 700; color: var(--navy); margin: 8px 0 0; line-height: 1.4; letter-spacing: 0.1em; }
+.blank { display: inline-block; min-width: 3.4ch; border-bottom: 5px dashed var(--navy); text-align: center; }
+.blank.filled { border-bottom-style: solid; background: var(--soft); border-radius: 8px 8px 0 0; }
+.big { font-size: 3.2rem; font-weight: 700; color: var(--navy); text-align: center; margin: 8px 0 0; line-height: 1.3; letter-spacing: 0.12em; }
+.split { text-align: center; font-size: 1.4rem; margin: 0; }
+.center { display: flex; justify-content: center; margin-top: 10px; }
+
+.slots { display: grid; gap: 10px; margin-top: 14px; }
+.slot {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 16px; border-radius: 16px;
+  border: 3px dashed var(--line); background: var(--bg); font-weight: 700;
+}
+.slot .n { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); color: var(--bg); flex: none; }
+.slot.filled { border-style: solid; border-color: var(--ok-line); background: var(--ok); }
+.pool { display: grid; gap: 10px; margin-top: 14px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.chip { padding: 4px 18px; border-radius: 20px; border: 3px solid var(--line); background: var(--bg); font-weight: 700; font-size: 1.3rem; }
+.chip.now { border-color: var(--navy); background: var(--soft); color: var(--navy); }
+.chip.done { background: var(--ok); border-color: var(--ok-line); }
+
+.fb { margin: 14px 0 0; padding: 12px 16px; border-radius: 16px; border: 3px solid transparent; min-height: 3.4em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fb:empty { display: none; }
+.fb.ok { background: var(--ok); border-color: var(--ok-line); }
+.fb.hint { background: var(--hint); border-color: var(--hint-line); }
+.primary {
+  min-height: 60px; padding: 0 28px; border-radius: 30px; cursor: pointer; font-weight: 700; font-size: 1.15rem;
+  background: var(--navy); border: 3px solid var(--navy); color: var(--bg);
+}
+.primary.ghost { background: var(--bg); color: var(--navy); }
+.nextrow { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.stars { font-size: 2.6rem; color: var(--navy); letter-spacing: 0.2em; margin: 4px 0; }
+
+.note { margin: 0; padding: 12px 16px; border-radius: 16px; background: var(--hint); border: 3px solid var(--hint-line); font-size: 0.95rem; }
+.say { background: var(--hint); box-shadow: 0 0 0 3px var(--hint); border-radius: 8px; }
+#storySpk { display: flex; flex-wrap: wrap; gap: 8px; }
+.shake { animation: shake .4s ease; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-5px); } 65% { transform: translateX(5px); } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } .sent { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap" lang="es">
+  <header>
+    <h1>Cuentos de Clara</h1>
+    <p class="tag">Lee, escucha y juega. Puedes equivocarte y volver a intentar.</p>
+  </header>
+
+  <nav aria-label="Niveles"><ul class="levels" id="levels"></ul></nav>
+
+  <div class="modebar">
+    <button class="mode" id="mode" type="button" aria-pressed="true">Lectura 1: Ayuda</button>
+    <button class="mode" id="rate" type="button" aria-pressed="true">Voz: lenta</button>
+    <p class="modenote" id="modeNote"></p>
+  </div>
+  <p class="note" id="spNote" role="status" aria-live="polite" hidden></p>
+
+  <section class="card" aria-labelledby="storyTitle">
+    <div class="head"><h2 id="storyTitle"></h2><span id="storySpk"></span></div>
+    <p class="text" id="story"></p>
+  </section>
+
+  <section class="card" aria-label="Actividad">
+    <div class="steps" id="steps"></div>
+    <div id="act"></div>
+    <p class="fb" id="fb" role="status" aria-live="polite"></p>
+    <div class="nextrow" id="nextrow" hidden><button class="primary" id="next" type="button">Seguir</button></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var SYL = '(cla|pla|bra|tra|fru|fre|bru|bre|glo|cri|gra|dra|fra|pra|pri|cru)';
+  var NS = 'http://www.w3.org/2000/svg';
+
+  var LEVELS = [
+    {
+      title: 'Clara y la fruta',
+      sents: ['Clara va a la plaza.', 'Lleva una fruta para su tía.', 'Al llegar, pone la fruta en un plato.', 'Su tía la parte y las dos comen.'],
+      steps: [
+        { type: 'choice', q: '¿Qué llevó Clara?', sent: 1, opts: [{ t: 'Una fruta', ic: '🍎', ok: true }, { t: 'Una pluma', ic: '🪶' }, { t: 'Un trapo', ic: '🧽' }] },
+        { type: 'fill', frame: '___za', ans: 'pla', opts: ['pla', 'pra', 'bla'], full: 'plaza', sent: 0 },
+        { type: 'fill', frame: '___ta', ans: 'fru', opts: ['fru', 'fra', 'fri'], full: 'fruta', sent: 1 },
+        { type: 'fill', frame: '___ra', ans: 'cla', opts: ['cla', 'cra', 'cle'], full: 'Clara', sent: 0 }
+      ]
+    },
+    {
+      title: 'El trapo de Bruno',
+      sents: ['Bruno lleva un trapo al patio.', 'Quiere limpiar una mesa.', 'El viento lleva el trapo hasta una silla.', 'Bruno lo recoge y termina de limpiar.'],
+      steps: [
+        { type: 'choice', q: '¿Adónde fue el trapo?', sent: 2, opts: [{ t: 'La mesa' }, { t: 'La silla', ok: true }, { t: 'La puerta' }] },
+        { type: 'fill', frame: '___po', ans: 'tra', opts: ['ta', 'tra', 'tar'], full: 'trapo', sent: 0 },
+        { type: 'reveal', word: 'trapo', parts: ['tra', 'po'] }
+      ]
+    },
+    {
+      title: 'El dibujo del Cerro Rico',
+      sents: ['En su clase, Gloria dibuja el Cerro Rico.', 'Bruno trae papel de color.', 'Los dos pegan el papel en el dibujo.', 'Al final, Gloria escribe el nombre del cerro.'],
+      steps: [
+        { type: 'order', cards: [{ t: 'Dibujar el cerro', sent: 0 }, { t: 'Pegar el papel', sent: 2 }, { t: 'Escribir el nombre', sent: 3 }], show: [2, 0, 1] },
+        { type: 'find', targets: [{ syl: 'cla', sent: 0 }, { syl: 'bru', sent: 1 }, { syl: 'tra', sent: 1 }] }
+      ]
+    },
+    {
+      title: 'La sorpresa de la feria',
+      sents: ['Clara y Bruno llevan un plato de fruta a la feria.', 'Una fresa cae al suelo.', 'Bruno la recoge y la deja a un lado.', 'Clara pone otra fresa en el plato.', 'Cuando llega su tía, le dan la fruta que quedó limpia.'],
+      steps: [
+        { type: 'choice', q: '¿Por qué Clara puso otra fresa en el plato?', sent: 1, opts: [{ t: 'Porque una cayó al suelo', ok: true }, { t: 'Porque su tía la pidió' }, { t: 'Porque el plato estaba vacío' }] },
+        { type: 'evidence', q: 'Toca en el cuento la oración que te ayuda a responder.', good: [1, 3], best: 1 },
+        { type: 'fill', frame: '___sa', ans: 'fre', opts: ['fre', 'fer', 'fe'], full: 'fresa', sent: 1 }
+      ]
+    }
+  ];
+
+  var st = { lv: 0, step: 0, help: true, slow: true, wrong: 0, glow: null, pick: null, found: {}, foundSent: null, done: [false, false, false, false] };
+  try {
+    var saved = JSON.parse(localStorage.getItem('cuentos-clara') || 'null');
+    if (saved && typeof saved === 'object') {
+      if (typeof saved.help === 'boolean') st.help = saved.help;
+      if (typeof saved.slow === 'boolean') st.slow = saved.slow;
+      if (Array.isArray(saved.done) && saved.done.length === 4) st.done = saved.done.map(Boolean);
+    }
+  } catch (e) {}
+  function save() { try { localStorage.setItem('cuentos-clara', JSON.stringify({ help: st.help, slow: st.slow, done: st.done })); } catch (e) {} }
+
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  function setFb(text, kind) {
+    var f = $('fb');
+    f.textContent = text || '';
+    f.className = 'fb' + (kind ? ' ' + kind : '');
+    return f;
+  }
+
+  /* ---------- Voz y lectura guiada ---------- */
+  var guideTok = 0, speakTok = 0;
+  var REASONS = {
+    nosupport: 'Este navegador no puede leer en voz alta.',
+    novoice: 'Este dispositivo no tiene una voz en español instalada.',
+    silent: 'No se pudo activar el audio aquí.'
+  };
+  function note(t) { var n = $('spNote'); n.textContent = t || ''; n.hidden = !t; }
+  function storyWords() { return Array.prototype.slice.call($('story').querySelectorAll('.w')); }
+  function stopGuide() {
+    guideTok += 1;
+    var old = document.querySelectorAll('.say');
+    for (var i = 0; i < old.length; i++) old[i].classList.remove('say');
+  }
+  function guide(nodes) {
+    stopGuide();
+    if (!nodes || !nodes.length) return;
+    var tok = guideTok, i = 0;
+    (function next() {
+      if (tok !== guideTok) return;
+      var prev = document.querySelector('.say');
+      if (prev) prev.classList.remove('say');
+      if (i >= nodes.length) return;
+      var n = nodes[i]; i += 1;
+      n.classList.add('say');
+      var len = (n.textContent || '').length;
+      setTimeout(next, st.slow ? 420 + len * 100 : 300 + len * 70);
+    })();
+  }
+  function fallback(nodes, why) {
+    note((REASONS[why] || REASONS.silent) + ' Te ayudo con la lectura guiada: sigue la palabra marcada. Para escuchar, abre el juego en Chrome, Edge o Safari, sube el volumen y revisa que haya una voz en español.');
+    if (nodes && nodes.length) guide(nodes);
+  }
+  function pickVoice() {
+    var vs = [];
+    try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+    var es = vs.filter(function (v) { return /^es([-_]|$)/i.test(v.lang); });
+    if (!es.length) return null;
+    var order = ['es-MX', 'es-US', 'es-419', 'es-ES'];
+    function score(v) {
+      var i = order.indexOf(v.lang.replace('_', '-'));
+      return (v.localService ? 0 : 10) + (i < 0 ? 5 : i);
+    }
+    es.sort(function (a, b) { return score(a) - score(b); });
+    return es[0];
+  }
+  function speak(text, nodes) {
+    speakTok += 1;
+    var tok = speakTok;
+    stopGuide();
+    var s = window.speechSynthesis;
+    if (!s || typeof SpeechSynthesisUtterance === 'undefined') { fallback(nodes, 'nosupport'); return; }
+    var go = function () {
+      if (tok !== speakTok) return;
+      try {
+        var voice = pickVoice(), all = s.getVoices() || [];
+        if (all.length && !voice) { fallback(nodes, 'novoice'); return; }
+        if (s.paused) s.resume();
+        var parts = text.split(/\s*[.!?]\s*/).filter(function (x) { return x.length > 0; });
+        var started = false, failed = false;
+        parts.forEach(function (part, i) {
+          var u = new SpeechSynthesisUtterance(part + '.');
+          u.lang = voice ? voice.lang : 'es-ES';
+          if (voice) u.voice = voice;
+          u.rate = st.slow ? 0.7 : 0.9;
+          if (i === 0) u.onstart = function () { started = true; note(''); };
+          u.onerror = function (ev) {
+            if (failed || (ev && (ev.error === 'interrupted' || ev.error === 'canceled'))) return;
+            failed = true;
+            try { s.cancel(); } catch (e) {}
+            if (tok === speakTok) fallback(nodes, 'silent');
+          };
+          s.speak(u);
+        });
+        setTimeout(function () {
+          if (!started && !failed && tok === speakTok) {
+            failed = true;
+            try { s.cancel(); } catch (e) {}
+            fallback(nodes, 'silent');
+          }
+        }, 2500);
+      } catch (e) { fallback(nodes, 'silent'); }
+    };
+    try { s.cancel(); } catch (e) {}
+    var have = [];
+    try { have = s.getVoices() || []; } catch (e) {}
+    if (have.length) {
+      setTimeout(go, 60);
+    } else {
+      var fired = false, run = function () { if (fired) return; fired = true; go(); };
+      try { s.addEventListener('voiceschanged', run); } catch (e) {}
+      setTimeout(run, 700);
+    }
+  }
+  function makeIcon() {
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '24'); svg.setAttribute('height', '24');
+    svg.setAttribute('aria-hidden', 'true');
+    var a = document.createElementNS(NS, 'path');
+    a.setAttribute('d', 'M3 9v6h4l5 4V5L7 9H3z'); a.setAttribute('fill', 'currentColor');
+    var b = document.createElementNS(NS, 'path');
+    b.setAttribute('d', 'M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12');
+    b.setAttribute('fill', 'none'); b.setAttribute('stroke', 'currentColor');
+    b.setAttribute('stroke-width', '2'); b.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(a); svg.appendChild(b);
+    return svg;
+  }
+  function spkBtn(label, textOrFn, nodesFn) {
+    var b = el('button', 'spk');
+    b.type = 'button';
+    b.setAttribute('aria-label', label);
+    b.appendChild(makeIcon());
+    b.appendChild(el('span', '', 'Escuchar'));
+    b.addEventListener('click', function () {
+      speak(typeof textOrFn === 'function' ? textOrFn() : textOrFn, nodesFn ? nodesFn() : null);
+    });
+    return b;
+  }
+
+  /* ---------- Cuento ---------- */
+  function fillWord(node, w) {
+    if (!st.help) { node.textContent = w; return; }
+    var re = new RegExp(SYL, 'gi'), last = 0, m;
+    while ((m = re.exec(w)) !== null) {
+      if (m.index > last) node.appendChild(document.createTextNode(w.slice(last, m.index)));
+      node.appendChild(el('span', 'syl', m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < w.length) node.appendChild(document.createTextNode(w.slice(last)));
+  }
+  function renderStory() {
+    stopGuide();
+    var L = LEVELS[st.lv], p = $('story'), wi = 0;
+    p.textContent = '';
+    L.sents.forEach(function (s, si) {
+      var sp = el('span', 'sent');
+      sp.dataset.s = String(si);
+      if (st.glow === si) sp.classList.add('glow');
+      if (st.foundSent === si) sp.classList.add('found');
+      if (st.pick === 'sents') { sp.classList.add('pickable'); sp.tabIndex = 0; sp.setAttribute('role', 'button'); }
+      var words = s.split(' ');
+      words.forEach(function (w, k) {
+        var ws = el('span', 'w');
+        ws.dataset.w = String(wi);
+        if (st.found[wi]) ws.classList.add('found');
+        if (st.pick === 'words') { ws.classList.add('pick'); ws.tabIndex = 0; ws.setAttribute('role', 'button'); }
+        fillWord(ws, w);
+        sp.appendChild(ws);
+        if (k < words.length - 1) sp.appendChild(document.createTextNode(' '));
+        wi++;
+      });
+      p.appendChild(sp);
+      p.appendChild(document.createTextNode(' '));
+    });
+  }
+  function storyActivate(target) {
+    var w = target.closest('.w'), s = target.closest('.sent');
+    if (st.pick === 'words' && w) onWordPick(w);
+    else if (st.pick === 'sents' && s) onSentPick(s);
+  }
+  $('story').addEventListener('click', function (e) { storyActivate(e.target); });
+  $('story').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); storyActivate(e.target); }
+  });
+
+  /* ---------- Pasos ---------- */
+  function renderSteps() {
+    var L = LEVELS[st.lv], box = $('steps');
+    box.textContent = '';
+    L.steps.forEach(function (_, i) {
+      box.appendChild(el('span', 'dot' + (i < st.step ? ' done' : (i === st.step ? ' now' : ''))));
+    });
+    var lab = st.step < L.steps.length ? 'Paso ' + (st.step + 1) + ' de ' + L.steps.length : 'Cuento terminado';
+    box.appendChild(el('span', '', lab));
+  }
+  function head(text, speech) {
+    var h = el('div', 'head'), t = el('h3'), words = [];
+    text.split(' ').forEach(function (w, i, a) {
+      var s = el('span', 'qw', w);
+      t.appendChild(s); words.push(s);
+      if (i < a.length - 1) t.appendChild(document.createTextNode(' '));
+    });
+    h.appendChild(t);
+    h.appendChild(spkBtn('Escuchar la pregunta', speech || text, function () { return words; }));
+    return h;
+  }
+  function firstEnabled(box) {
+    var b = box.querySelector('button:not(:disabled)');
+    if (b) b.focus({ preventScroll: true });
+  }
+  function wrongHint(kind, sent, msg) {
+    st.wrong += 1;
+    if (st.wrong >= 2 && sent != null) {
+      st.glow = sent;
+      renderStory();
+      setFb('Mira la parte marcada en el cuento. Ahí está la pista.', 'hint');
+    } else {
+      setFb(msg || 'Casi. Lee el cuento otra vez y prueba con otra.', 'hint');
+    }
+  }
+  function success(text, nextLabel, spokenWord) {
+    st.pick = null; st.glow = null;
+    renderStory();
+    var f = setFb(text, 'ok');
+    if (spokenWord) f.appendChild(spkBtn('Escuchar la palabra ' + spokenWord, spokenWord));
+    var L = LEVELS[st.lv];
+    $('next').textContent = nextLabel || (st.step === L.steps.length - 1 ? 'Terminar cuento' : 'Seguir');
+    $('nextrow').hidden = false;
+    $('next').focus();
+  }
+  function shake(node) {
+    node.classList.remove('shake'); void node.offsetWidth; node.classList.add('shake');
+  }
+
+  function renderStep() {
+    var L = LEVELS[st.lv], step = L.steps[st.step], act = $('act');
+    st.wrong = 0; st.pick = null; st.glow = null; st.found = {}; st.foundSent = null;
+    act.textContent = '';
+    setFb('');
+    $('nextrow').hidden = true;
+    renderSteps();
+    if (step.type === 'choice') stepChoice(step, act);
+    else if (step.type === 'fill') stepFill(step, act);
+    else if (step.type === 'reveal') stepReveal(step, act);
+    else if (step.type === 'order') stepOrder(step, act);
+    else if (step.type === 'find') stepFind(step, act);
+    else if (step.type === 'evidence') stepEvidence(step, act);
+    renderStory();
+  }
+
+  function stepChoice(step, act) {
+    var spoken = step.q + ' Opciones: ' + step.opts.map(function (o) { return o.t; }).join(', ') + '.';
+    act.appendChild(head(step.q, spoken));
+    var box = el('div', 'opts');
+    step.opts.forEach(function (o) {
+      var b = el('button', 'opt');
+      b.type = 'button';
+      if (o.ic) b.appendChild(el('span', 'ic', o.ic)).setAttribute('aria-hidden', 'true');
+      b.appendChild(el('span', '', o.t));
+      b.addEventListener('click', function () {
+        if (o.ok) {
+          b.classList.add('right');
+          box.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; });
+          success('¡Muy bien! ' + o.t + '.');
+        } else {
+          b.disabled = true; b.classList.add('tried'); shake(b);
+          wrongHint('choice', step.sent);
+          firstEnabled(box);
+        }
+      });
+      box.appendChild(b);
+    });
+    act.appendChild(box);
+  }
+
+  function stepFill(step, act) {
+    var ending = step.frame.replace('___', '');
+    act.appendChild(head('Completa la palabra', 'Completa la palabra que termina en ' + ending.split('').join(' ') + '. Elige la sílaba que falta.'));
+    var fr = el('p', 'frame');
+    var blank = el('span', 'blank', '');
+    blank.textContent = '   ';
+    fr.appendChild(blank);
+    fr.appendChild(document.createTextNode(ending));
+    act.appendChild(fr);
+    var box = el('div', 'sylopts');
+    step.opts.forEach(function (o) {
+      var b = el('button', 'opt', o);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        if (o === step.ans) {
+          blank.textContent = o; blank.classList.add('filled');
+          b.classList.add('right');
+          box.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; });
+          success('¡Muy bien! La palabra es ' + step.full.toLowerCase() + '.', null, step.full.toLowerCase());
+        } else {
+          b.disabled = true; b.classList.add('tried'); shake(b);
+          wrongHint('fill', step.sent, 'Casi. Prueba otra sílaba. Puedes usar el altavoz.');
+          firstEnabled(box);
+        }
+      });
+      box.appendChild(b);
+    });
+    act.appendChild(box);
+  }
+
+  function stepReveal(step, act) {
+    act.appendChild(head('Lee la palabra completa', 'Lee la palabra completa. ' + step.word));
+    var w = el('p', 'big');
+    fillWord(w, step.word);
+    act.appendChild(w);
+    act.appendChild(el('p', 'split', step.parts.join(' · ')));
+    var c = el('div', 'center');
+    c.appendChild(spkBtn('Escuchar la palabra ' + step.word, step.word));
+    act.appendChild(c);
+    success('¡Lo lograste! Leíste «' + step.word + '».');
+  }
+
+  function stepOrder(step, act) {
+    act.appendChild(head('Ordena lo que pasó en el cuento', 'Ordena lo que pasó en el cuento. Toca primero la tarjeta de lo que pasó primero.'));
+    var slots = el('div', 'slots'), pool = el('div', 'pool'), slotEls = [], placed = 0;
+    for (var i = 0; i < step.cards.length; i++) {
+      var s = el('div', 'slot');
+      s.appendChild(el('span', 'n', String(i + 1)));
+      s.appendChild(el('span', 'tx', ''));
+      slots.appendChild(s); slotEls.push(s);
+    }
+    step.show.forEach(function (idx) {
+      var card = step.cards[idx];
+      var b = el('button', 'opt', card.t);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        if (idx === placed) {
+          var s = slotEls[placed];
+          s.classList.add('filled');
+          s.querySelector('.tx').textContent = card.t;
+          b.hidden = true;
+          placed += 1; st.wrong = 0; st.glow = null; renderStory();
+          if (placed === step.cards.length) success('¡Muy bien! Está en el orden correcto.');
+          else { setFb('¡Bien! Ahora toca la siguiente.', 'ok'); firstEnabled(pool); }
+        } else {
+          shake(b);
+          wrongHint('order', step.cards[placed].sent, 'Casi. Piensa qué pasó primero en el cuento.');
+        }
+      });
+      pool.appendChild(b);
+    });
+    act.appendChild(slots);
+    act.appendChild(pool);
+  }
+
+  function stepFind(step, act) {
+    var t = 0, chips = el('div', 'chips'), chipEls = [], prompt;
+    act.appendChild(head('Encuentra las sílabas', 'Toca en el cuento la palabra que tiene la sílaba que te pido.'));
+    prompt = el('p', '', '');
+    prompt.style.fontWeight = '700';
+    act.appendChild(prompt);
+    step.targets.forEach(function (x) {
+      var c = el('span', 'chip', x.syl);
+      chips.appendChild(c); chipEls.push(c);
+    });
+    act.appendChild(chips);
+    var ps = el('div', 'center');
+    var psBtn = spkBtn('Escuchar la consigna', function () { return 'Toca en el cuento la palabra que tiene ' + step.targets[Math.min(t, step.targets.length - 1)].syl.split('').join(' ') + '.'; });
+    ps.appendChild(psBtn);
+    act.appendChild(ps);
+    function refresh() {
+      chipEls.forEach(function (c, i) { c.className = 'chip' + (i < t ? ' done' : (i === t ? ' now' : '')); });
+      if (t < step.targets.length) prompt.textContent = 'Toca la palabra del cuento que tiene «' + step.targets[t].syl + '».';
+    }
+    refresh();
+    st.pick = 'words';
+    st.findStep = { step: step, get t() { return t; }, advance: function (wi) {
+      st.found[wi] = true; t += 1; st.wrong = 0; st.glow = null; refresh();
+      if (t >= step.targets.length) success('¡Excelente! Encontraste las tres sílabas.');
+      else { setFb('¡Bien! Ahora busca otra sílaba.', 'ok'); renderStory(); }
+    } };
+  }
+  function onWordPick(w) {
+    var fs = st.findStep, wi = parseInt(w.dataset.w, 10);
+    if (!fs || st.found[wi]) return;
+    var target = fs.step.targets[fs.t];
+    var word = w.textContent.toLowerCase().replace(/[.,;:!?¡¿]/g, '');
+    if (word.indexOf(target.syl) > -1) {
+      fs.advance(wi);
+    } else {
+      shake(w);
+      wrongHint('find', target.sent, 'Esa palabra no tiene «' + target.syl + '». Prueba con otra.');
+    }
+  }
+
+  function stepEvidence(step, act) {
+    act.appendChild(head(step.q, step.q));
+    st.pick = 'sents';
+    st.evidence = step;
+  }
+  function onSentPick(s) {
+    var step = st.evidence, si = parseInt(s.dataset.s, 10);
+    if (!step) return;
+    if (step.good.indexOf(si) > -1) {
+      st.foundSent = si;
+      success(si === step.best
+        ? '¡Exacto! Esa oración explica el motivo.'
+        : 'Esa oración también ayuda. La que explica el motivo es «Una fresa cae al suelo.»');
+    } else {
+      shake(s);
+      wrongHint('evidence', step.best, 'Esa oración no explica el motivo. Prueba con otra.');
+    }
+  }
+
+  /* ---------- Niveles ---------- */
+  function renderLevels() {
+    var ul = $('levels');
+    ul.textContent = '';
+    LEVELS.forEach(function (L, i) {
+      var li = el('li');
+      var b = el('button', 'lv');
+      b.type = 'button';
+      var n = el('b', '', 'Nivel ' + (i + 1) + (st.done[i] ? ' ✓' : ''));
+      b.appendChild(n);
+      b.appendChild(document.createTextNode(L.title));
+      if (i === st.lv) b.setAttribute('aria-current', 'true');
+      b.addEventListener('click', function () { loadLevel(i); });
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+  function loadLevel(i) {
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+    st.lv = i; st.step = 0;
+    var L = LEVELS[i];
+    $('storyTitle').textContent = 'Nivel ' + (i + 1) + ' · ' + L.title;
+    var holder = $('storySpk');
+    holder.textContent = '';
+    holder.appendChild(spkBtn('Escuchar el cuento', function () { return LEVELS[st.lv].title + '. ' + LEVELS[st.lv].sents.join(' '); }, storyWords));
+    var gb = el('button', 'spk', 'Leer con colores');
+    gb.type = 'button';
+    gb.setAttribute('aria-label', 'Leer el cuento con colores, sin audio');
+    gb.addEventListener('click', function () { note('Sigue la palabra marcada.'); guide(storyWords()); });
+    holder.appendChild(gb);
+    note('');
+    renderLevels();
+    renderStep();
+  }
+  function finishLevel() {
+    st.done[st.lv] = true; save(); renderLevels();
+    var act = $('act');
+    act.textContent = '';
+    setFb('');
+    $('nextrow').hidden = true;
+    st.pick = null; st.glow = null; st.found = {}; st.foundSent = null;
+    renderStory();
+    $('steps').textContent = '';
+    act.appendChild(el('h3', '', '¡Terminaste el cuento!'));
+    var stars = el('p', 'stars', '★ ★ ★');
+    stars.setAttribute('aria-hidden', 'true');
+    act.appendChild(stars);
+    act.appendChild(el('p', '', 'Leíste «' + LEVELS[st.lv].title + '» y completaste todos los juegos. Buen trabajo.'));
+    var row = el('div', 'nextrow');
+    if (st.lv < LEVELS.length - 1) {
+      var n = el('button', 'primary', 'Siguiente cuento');
+      n.type = 'button';
+      n.addEventListener('click', function () { loadLevel(st.lv + 1); window.scrollTo(0, 0); });
+      row.appendChild(n);
+    }
+    var r = el('button', 'primary ghost', 'Leer otra vez');
+    r.type = 'button';
+    r.addEventListener('click', function () { loadLevel(st.lv); });
+    row.appendChild(r);
+    act.appendChild(row);
+    if (row.firstChild) row.firstChild.focus();
+  }
+
+  $('next').addEventListener('click', function () {
+    var L = LEVELS[st.lv];
+    st.step += 1;
+    if (st.step >= L.steps.length) finishLevel();
+    else { renderStep(); }
+  });
+
+  function renderMode() {
+    var b = $('mode');
+    b.textContent = st.help ? 'Lectura 1: Ayuda' : 'Lectura 2: Reto';
+    b.setAttribute('aria-pressed', String(st.help));
+    $('modeNote').textContent = st.help
+      ? 'Las sílabas con tres letras se resaltan en azul. Toca el botón para pasar a Reto.'
+      : 'El texto aparece normal. Tú buscas las sílabas. Toca el botón para volver a Ayuda.';
+  }
+  $('mode').addEventListener('click', function () {
+    st.help = !st.help; save(); renderMode(); renderStory();
+  });
+  function renderRate() {
+    var b = $('rate');
+    b.textContent = 'Voz: ' + (st.slow ? 'lenta' : 'normal');
+    b.setAttribute('aria-pressed', String(st.slow));
+  }
+  $('rate').addEventListener('click', function () { st.slow = !st.slow; save(); renderRate(); });
+
+  if (window.speechSynthesis && window.speechSynthesis.getVoices) window.speechSynthesis.getVoices();
+  renderMode();
+  renderRate();
+  loadLevel(0);
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker de Cuentos de Clara activado', reg))
+        .catch(err => console.error('Error al registrar el Service Worker', err));
+    });
+  }
+</script>
+
+</body>
+</html>
